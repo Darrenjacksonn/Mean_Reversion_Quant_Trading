@@ -1,0 +1,13 @@
+#python==3.12.2
+
+ipykernel==6.29.2
+
+pandas==2.2.0
+matplotlib==3.8.3
+yfinance==0.2.36
+
+alpaca-trade-api==3.2.0
+
+alpaca-py==0.15.0
+
+statsmodels==0.14.1
