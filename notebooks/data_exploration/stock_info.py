@@ -8,26 +8,29 @@ import requests as rq
 from bs4 import BeautifulSoup as bs
 
 '''
-Going to define a custom class, each instance is the information on a single stock, will then define a seperate 
-analysing class to compare stocks
+StockInfo() is used to gather the 'Adj Close' stock price of stocks from yahoo finance using yfinance.
+Each instance is the information of a single stock. It takes parameters are:
+ticker = ticker symbol of stock
+start = start date of information retrieval
+end = end date of information retrieval
+interval = frequency of data points
+Valid values for interval include:
+1m, 2m, 5m, 15m, 30m, 60m, 90m, 1d, 5d, 1wk, 1mo, 3mo
 
-This class StockInfo will contain all information about a stock between a certain period specified and will 
-also be able to compute relevant mathematical computations on the stock info, as well as plot some key graphs.
+
+This methods of this class allow you to conduct mathematical computations on the stock info, 
+as well as plot some key graphs. Each method has a description above it.
 '''
 
 
 
 class StockInfo():
-    '''
-    This class gathers the 'Adj Close' prices of the stock with ticker = ticker
     
-    When you initiate the function you have the option to select a start and end date, if none are inputted,
-    all possible data will be selected. The data is stored in a pandas DataFrame.
-    '''
-
-
+    # By default (no values for start or end) this class stores all the available data as a pandas DataFrame.
+    
     def __init__(self, ticker: str, start = None, end = None, interval = '1d') -> pd.DataFrame:
         
+        # Includes custom exception handling so future methods do not break if stock info is not available for a set of given parameters
         try:
             adj_close_prices = yf.download(ticker, start = start, end = end, interval = interval)['Adj Close'].to_frame()
 
@@ -46,19 +49,24 @@ class StockInfo():
             print(f"An unexpected error occurres: {e}")
             self.data = pd.DataFrame()
             self.ticker = ticker
+    
+    
+    # For all methods we will assume that period is a list with the following layout:
+    # period = [start_date, end_date, investment_amount]
+    
 
-    # period = [start, end, amount theoretically invested]
-
+    # This method is called upon to initiate the entire dataset if no period is specified
     def default_period(self, period):
         if not period:
-            period = [self.data.index[0], self.data.index[-1], 1]
+            period = [self.data.index[0], self.data.index[-1], 100]
         return period
-
+    # I may change period to be a dictionary: period = { 'start' : start... } in the future as it would most likely improve readability below
 
 
     '''
-        For Displaying info about the Stock Prices
-                                                    '''
+        For Displaying info about the Stock Prices and performing analysis on the stock data
+    '''
+
 
     def display_data(self, period = None):
         period = self.default_period(period)
@@ -67,6 +75,23 @@ class StockInfo():
     def plot_stock_price(self, period = None):
         period, segment = self.default_period(period), self.display_data(period)
         segment.plot()
+    
+    '''
+        THESE METHODS ARE STATISITCAL MEASURES OF prices
+    '''
+    
+    def variance(self, period = None): 
+        period = self.default_period(period)
+        segment = self.data.loc[period[0] : period[1]]
+        return segment.var()
+    
+    def std(self, period = None):
+        return np.sqrt(self.variance(period))
+    
+    def mean(self, period = None):
+        period = self.default_period(period)
+        segment = self.data.loc[period[0] : period[1]]
+        return segment.mean()
 
 
 
@@ -75,7 +100,7 @@ class StockInfo():
 
     '''
         THESE METHODS HELP YOU WORK WITH RETURNS 
-                                                    '''
+    '''
     
     # 'returns' function outputs the returns of the stock in a given interval
     def df_returns(self, period = None) -> pd.DataFrame:
@@ -100,43 +125,40 @@ class StockInfo():
         return_df.plot()
     
 
-
-    
-
-
-
-
     '''
-        THESE METHODS HELP YOU WORK WITH VOLATILITY
-                                                    '''
-
-    def variance(self, period = None): # Takes the variance of the Adj Close values
-        period = self.default_period(period)
-        segment = self.data.loc[period[0] : period[1]]
-        return segment.pct_change().mul(100).dropna().var()
-
-    def sigma(self, period = None):
-        return np.sqrt(self.variance(period))
+        THESE METHODS ARE STATISITCAL MEASURES OF RETURNS
+    '''
     
-    def mean(self, period = None):
+
+    def variance_of_returns(self, period = None): # Finds the variance of the Adj Close values
         period = self.default_period(period)
         segment = self.data.loc[period[0] : period[1]]
-        return segment.mean()
+        return segment.pct_change().mul(period[2]).dropna().var()
+
+    def std_of_returns(self, period = None):
+        return np.sqrt(self.variance_of_returns(period))
+    
+    def mean_of_returns(self, period = None):
+        period = self.default_period(period)
+        segment = self.data.loc[period[0] : period[1]]
+        return segment.pct_change().mul(period[2]).dropna().mean()
+
+
 
 
 
     '''
         Augmented Dickey-Fuller Test
-                                    '''
+    '''
 
-    def adf_test(self, period = None, graph = False):
-        period = self.default_period(period)
-        segment = self.data.loc[period[0] : period[1]]
-        arr = segment.iloc[:,0] # Converts 1D Pandas DataFrame to series
-        result = adfuller(arr)
-        if graph:
-            self.plot_stock_price(period)
-        return f" ADF Statistic: {result[0]} \np-value: {result[1]}"
+    # def adf_test(self, period = None, graph = False):
+    #     period = self.default_period(period)
+    #     segment = self.data.loc[period[0] : period[1]]
+    #     arr = segment.iloc[:,0] # Converts 1D Pandas DataFrame to series
+    #     result = adfuller(arr)
+    #     if graph:
+    #         self.plot_stock_price(period)
+    #     return f" ADF Statistic: {result[0]} \np-value: {result[1]}"
 
 
 

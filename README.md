@@ -1,5 +1,5 @@
 # Mean_Reversion Quant Trading
-Mean Reversion Quant Trading is a quantitative trading stratgey that utilises the mean reversion principal to trade stock assets profitably.
+Mean Reversion Quant Trading is a quantitative trading strategy that utilises the mean reversion principal to trade stock assets profitably.
 
 # Description
 The purpose of this project is to formulate a low-risk long-term trading stratgey that utilizes mean reversion principals at its core. It is designed to be a favourable alternative to a passive buy and hold position, offering similar returns versus greatly reduced risk in the form of a reduction in time spent in the market. The main reason for choosing a project like this is I have a deep passion for programming, mathematics and a keen interest in financial markets. As a result, this project aims to highlight my comptenecies in these fields, as well as my ability to gather, clean, process, manipulate and analyse data.
