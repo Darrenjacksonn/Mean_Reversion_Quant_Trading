@@ -4,6 +4,9 @@ import matplotlib as plt
 import numpy as np
 from statsmodels.tsa.stattools import adfuller
 
+import requests as rq
+from bs4 import BeautifulSoup as bs
+
 '''
 Going to define a custom class, each instance is the information on a single stock, will then define a seperate 
 analysing class to compare stocks
@@ -24,10 +27,25 @@ class StockInfo():
 
 
     def __init__(self, ticker: str, start = None, end = None, interval = '1d') -> pd.DataFrame:
-        adj_close_prices = yf.download(ticker, start = start, end = end, interval = interval)['Adj Close'].to_frame()
         
-        self.data = adj_close_prices.rename(columns = {'Adj Close' : f"{ticker}"})
-        self.ticker = ticker
+        try:
+            adj_close_prices = yf.download(ticker, start = start, end = end, interval = interval)['Adj Close'].to_frame()
+
+            if adj_close_prices.empty:
+                raise ValueError(f"No Data foound for ticker {ticker} in the given date range")
+            
+            self.data = adj_close_prices.rename(columns = {'Adj Close' : f"{ticker}"})
+            self.ticker = ticker
+        
+        except ValueError as ve:
+            print(ve)
+            self.data = pd.DataFrame()
+            self.ticker = ticker
+        
+        except Exception as e:
+            print(f"An unexpected error occurres: {e}")
+            self.data = pd.DataFrame()
+            self.ticker = ticker
 
     # period = [start, end, amount theoretically invested]
 
@@ -67,6 +85,10 @@ class StockInfo():
 
     def returns(self, period = None) -> float:
         return_df = self.df_returns(period)
+        return return_df.iloc[-1]
+
+    def profit(self, period = None) -> float:
+        return_df = self.df_returns(period)
         return return_df.iloc[-1] - return_df.iloc[0]
 
     def perc_returns(self, period = None) -> float:
@@ -88,13 +110,19 @@ class StockInfo():
         THESE METHODS HELP YOU WORK WITH VOLATILITY
                                                     '''
 
-    def variance(self, period = None):
+    def variance(self, period = None): # Takes the variance of the Adj Close values
         period = self.default_period(period)
         segment = self.data.loc[period[0] : period[1]]
         return segment.pct_change().mul(100).dropna().var()
 
     def sigma(self, period = None):
         return np.sqrt(self.variance(period))
+    
+    def mean(self, period = None):
+        period = self.default_period(period)
+        segment = self.data.loc[period[0] : period[1]]
+        return segment.mean()
+
 
 
     '''
@@ -109,4 +137,22 @@ class StockInfo():
         if graph:
             self.plot_stock_price(period)
         return f" ADF Statistic: {result[0]} \np-value: {result[1]}"
-        
+
+
+
+
+
+# This function finds S&P500 stock tickers in order of market cap
+
+def sap500_tickers(index_1, index_2):
+
+    url = 'https://stockanalysis.com/list/sp-500-stocks/'
+    response = rq.get(url)
+    soup = bs(response.text, 'html.parser')
+    table_entries = soup.find_all('td')
+    tickers = []
+    for td in table_entries:
+        a_tags = td.find('a')
+        if a_tags:
+            tickers.append(a_tags.text)
+    return tickers[index_1 : index_2]

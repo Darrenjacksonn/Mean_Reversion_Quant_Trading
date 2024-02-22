@@ -11,3 +11,5 @@ alpaca-trade-api==3.2.0
 alpaca-py==0.15.0
 
 statsmodels==0.14.1
+
+backtrader==1.9.78.123
