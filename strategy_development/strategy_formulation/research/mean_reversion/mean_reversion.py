@@ -1,7 +1,7 @@
 import sys
 sys.path.append('../')
 
-from comparisons.buy_and_hold import Strategy_Comparison
+from comparisons.buy_and_hold import StrategyComparison
 import numpy as np
 import yfinance as yf
 import matplotlib.pyplot as plt
@@ -9,7 +9,7 @@ import matplotlib.pyplot as plt
 
 # Classic Mean Reversion Stratgey
 
-class MeanReversion(Strategy_Comparison):
+class MeanReversion(StrategyComparison):
 
     def mean_reversion(self, period, scope = 30, graph = True, analysis = True):
         period = self.default_period(period)
